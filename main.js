@@ -320,7 +320,7 @@ function startPolling() {
         mainWindow.webContents.send('spotify-track', null);
       }
     } catch (e) {}
-  }, 1500);
+  }, 4000);
 }
 
 function cleanup() {
@@ -469,6 +469,8 @@ ipcMain.handle('activity-test', () => {
   }, 900);
   return true;
 });
+
+if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 
 app.whenReady().then(() => {
   spotify = new SpotifyAuth();
