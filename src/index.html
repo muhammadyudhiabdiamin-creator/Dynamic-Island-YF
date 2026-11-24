@@ -1,0 +1,304 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Island</title>
+  <link rel="stylesheet" href="styles/island.css">
+  <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body>
+  <main id="island" class="island compact" aria-label="Dynamic Island widget">
+    <div id="drag-handle" class="drag-handle" title="Drag to move"></div>
+
+    <!-- COMPACT VIEW -->
+    <div class="island-compact" id="island-compact">
+      <div class="compact-left">
+        <img id="compact-avatar" class="compact-avatar" src="" alt="Notch avatar" width="18" height="18" style="display:none;" />
+        <div class="status-dot" id="status-dot" aria-hidden="true"></div>
+        <span class="compact-clock" id="compact-clock">00:00</span>
+      </div>
+
+      <div class="compact-lyric" id="compact-lyric" aria-live="polite"></div>
+
+      <div class="compact-right">
+        <span class="compact-timer-badge" id="compact-timer-badge" style="display:none;">25:00</span>
+        <div class="compact-indicator" id="compact-indicator" aria-hidden="true">
+          <span class="indicator-dot"></span>
+          <span class="indicator-dot"></span>
+          <span class="indicator-dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOM HUD BAR (Volume / Brightness / Live Activity) -->
+    <div class="hud-bar" id="hud-bar" style="display:none;" role="status" aria-live="polite">
+      <span class="hud-label" id="hud-label">Volume</span>
+      <div class="hud-track">
+        <div class="hud-fill" id="hud-fill"></div>
+      </div>
+      <span class="hud-value" id="hud-value">50%</span>
+    </div>
+
+    <!-- DOWNLOAD NOTIFICATION BAR -->
+    <div class="download-bar" id="download-bar" style="display:none;" role="status" aria-live="polite">
+      <svg class="download-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span class="download-name" id="download-name"></span>
+      <div class="download-actions">
+        <button type="button" class="dl-btn primary" id="btn-dl-open">Open</button>
+        <button type="button" class="dl-btn" id="btn-dl-folder">Folder</button>
+        <button type="button" class="dl-btn icon" id="btn-dl-close" aria-label="Dismiss download alert">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- EXPANDED VIEW -->
+    <div class="island-expanded">
+      <div class="expanded-tabs" role="tablist" aria-label="Widget mode">
+        <button type="button" class="tab-btn active" id="tab-music" role="tab" aria-selected="true">Music</button>
+        <button type="button" class="tab-btn" id="tab-timer" role="tab" aria-selected="false">Timer</button>
+        <button type="button" class="tab-btn" id="tab-notes" role="tab" aria-selected="false">Notes</button>
+        <button type="button" class="tab-btn" id="tab-stats" role="tab" aria-selected="false">Stats</button>
+        <button type="button" class="tab-btn" id="tab-mirror" role="tab" aria-selected="false">Mirror</button>
+        <button type="button" class="tab-btn" id="tab-tools" role="tab" aria-selected="false">Tools</button>
+        <div class="header-meta">
+          <span class="weather-pill" id="weather-pill" title="Current weather"></span>
+          <span class="battery-pill" id="battery-pill" aria-label="Battery level"></span>
+        </div>
+      </div>
+
+      <!-- Setup view -->
+      <div class="setup-view" id="setup-view">
+        <div class="setup-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <h1 class="setup-title">Connect Spotify</h1>
+        <div class="setup-fields" id="setup-fields">
+          <label for="input-client-id" class="sr-only">Spotify Client ID</label>
+          <input type="text" id="input-client-id" placeholder="Client ID" class="setup-input" />
+          <label for="input-client-secret" class="sr-only">Spotify Client Secret</label>
+          <input type="password" id="input-client-secret" placeholder="Client Secret" class="setup-input" />
+          <button type="button" class="setup-btn" id="btn-save-config">Save &amp; Connect</button>
+        </div>
+        <div class="setup-hint">
+          Get credentials at <button type="button" class="setup-link" id="open-spotify-dev">developer.spotify.com</button>
+        </div>
+      </div>
+
+      <!-- Music view -->
+      <div class="music-view" id="music-view" style="display:none;">
+        <div class="expanded-content">
+          <div class="vinyl-container" id="vinyl-container">
+            <div class="vinyl-record" id="vinyl-record">
+              <div class="vinyl-grooves"></div>
+              <div class="vinyl-label">
+                <img class="album-art" id="album-art" src="" alt="Album artwork" width="46" height="46" />
+                <div class="vinyl-hole"></div>
+              </div>
+              <div class="vinyl-shine"></div>
+            </div>
+          </div>
+
+          <div class="right-content" id="right-content">
+            <div class="visualizer-container" id="visualizer-container">
+              <canvas id="visualizer-canvas" width="180" height="100"></canvas>
+            </div>
+            <div class="lyrics-container" id="lyrics-container" style="display:none;">
+              <div class="lyrics-scroll" id="lyrics-scroll"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="expanded-info">
+          <div class="song-info">
+            <div class="song-title" id="song-title">Not playing</div>
+            <div class="song-artist" id="song-artist">Play a track on Spotify</div>
+          </div>
+          <div class="media-controls">
+            <button type="button" class="control-btn" id="btn-prev" aria-label="Previous track">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+              </svg>
+            </button>
+            <button type="button" class="control-btn control-btn-play" id="btn-play" aria-label="Play or pause">
+              <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none;">
+                <path d="M6 5h4v14H6zm8 0h4v14h-4z"/>
+              </svg>
+            </button>
+            <button type="button" class="control-btn" id="btn-next" aria-label="Next track">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <span class="progress-time" id="progress-current">0:00</span>
+          <div class="progress-bar" id="progress-bar" role="slider" aria-label="Seek track position" tabindex="0">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <span class="progress-time" id="progress-total">0:00</span>
+        </div>
+      </div>
+
+      <!-- Timer view -->
+      <div class="timer-view" id="timer-view" style="display:none;">
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="timer-presets">
+          <button type="button" class="preset-btn active" data-minutes="25">25m</button>
+          <button type="button" class="preset-btn" data-minutes="15">15m</button>
+          <button type="button" class="preset-btn" data-minutes="5">5m</button>
+        </div>
+        <div class="timer-actions">
+          <button type="button" class="timer-btn primary" id="btn-timer-toggle">Start</button>
+          <button type="button" class="timer-btn" id="btn-timer-reset">Reset</button>
+        </div>
+      </div>
+
+      <!-- Notes & Agenda view -->
+      <div class="notes-view" id="notes-view" style="display:none;">
+        <div class="sub-tabs">
+          <button type="button" class="sub-tab active" id="sub-todo">To-Do</button>
+          <button type="button" class="sub-tab" id="sub-agenda">Agenda</button>
+        </div>
+
+        <div class="todo-panel" id="todo-panel">
+          <form class="inline-form" id="todo-form">
+            <label for="todo-input" class="sr-only">New task</label>
+            <input type="text" id="todo-input" class="mini-input" placeholder="Add a quick task..." />
+            <button type="submit" class="dl-btn primary">Add</button>
+          </form>
+          <div class="scroll-list" id="todo-list"></div>
+        </div>
+
+        <div class="agenda-panel" id="agenda-panel" style="display:none;">
+          <form class="inline-form" id="agenda-form">
+            <label for="agenda-time" class="sr-only">Event time</label>
+            <input type="time" id="agenda-time" class="mini-input time-input" required />
+            <label for="agenda-title" class="sr-only">Event title</label>
+            <input type="text" id="agenda-title" class="mini-input" placeholder="Meeting or reminder..." required />
+            <button type="submit" class="dl-btn primary">Add</button>
+          </form>
+          <div class="scroll-list" id="agenda-list"></div>
+        </div>
+      </div>
+
+      <!-- System Stats + HUD + Live Activity view -->
+      <div class="stats-view" id="stats-view" style="display:none;">
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">CPU</span>
+            <span class="stat-val" id="stat-cpu">0%</span>
+            <div class="mini-bar"><div class="mini-bar-fill" id="bar-cpu"></div></div>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">RAM</span>
+            <span class="stat-val" id="stat-ram">0%</span>
+            <div class="mini-bar"><div class="mini-bar-fill" id="bar-ram"></div></div>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">NET</span>
+            <span class="stat-val net-val" id="stat-net">0 KB/s</span>
+            <span class="stat-sub" id="stat-net-up">Up 0 KB/s</span>
+          </div>
+        </div>
+
+        <div class="hud-sliders">
+          <div class="slider-row">
+            <label for="slider-volume" class="slider-label">Volume</label>
+            <input type="range" id="slider-volume" min="0" max="100" value="50" class="hud-range" />
+            <span class="slider-num" id="slider-volume-val">50%</span>
+          </div>
+          <div class="slider-row">
+            <label for="slider-brightness" class="slider-label">Screen</label>
+            <input type="range" id="slider-brightness" min="10" max="100" value="80" class="hud-range" />
+            <span class="slider-num" id="slider-brightness-val">80%</span>
+          </div>
+        </div>
+
+        <div class="activity-row">
+          <span class="shelf-hint" id="activity-status-text">Live Activity port: 127.0.0.1:8889/activity</span>
+          <button type="button" class="dl-btn" id="btn-test-activity">Test Live</button>
+        </div>
+      </div>
+
+      <!-- Webcam Mirror view -->
+      <div class="mirror-view" id="mirror-view" style="display:none;">
+        <div class="mirror-stage">
+          <video id="mirror-video" class="mirror-video flipped" autoplay playsinline muted width="320" height="180"></video>
+          <div class="mirror-state" id="mirror-state">Starting camera...</div>
+        </div>
+        <div class="shelf-footer">
+          <span class="shelf-hint">Preview only, nothing is recorded</span>
+          <button type="button" class="dl-btn" id="btn-mirror-flip">Flip</button>
+        </div>
+      </div>
+
+      <!-- Tools view (Shelf, Clip, Avatar) -->
+      <div class="tools-view" id="tools-view" style="display:none;">
+        <div class="sub-tabs">
+          <button type="button" class="sub-tab active" id="sub-shelf">Shelf</button>
+          <button type="button" class="sub-tab" id="sub-clip">Clip</button>
+          <button type="button" class="sub-tab" id="sub-avatar">Avatar</button>
+        </div>
+
+        <div class="shelf-view" id="shelf-view">
+          <div class="shelf-empty" id="shelf-empty">
+            <p class="shelf-empty-title">Drop files here to hold them</p>
+            <p class="shelf-empty-sub">Drag any file out to another app when ready</p>
+          </div>
+          <div class="shelf-list" id="shelf-list" style="display:none;"></div>
+          <div class="shelf-footer" id="shelf-footer" style="display:none;">
+            <span class="shelf-hint">Drag a row out to move or attach</span>
+            <button type="button" class="mini-text-btn" id="btn-shelf-clear">Clear all</button>
+          </div>
+        </div>
+
+        <div class="clip-view" id="clip-view" style="display:none;">
+          <div class="clip-empty" id="clip-empty">
+            <p class="shelf-empty-title">Clipboard history is empty</p>
+            <p class="shelf-empty-sub">Copy any text to save your last 5 items here</p>
+          </div>
+          <div class="clip-list" id="clip-list" style="display:none;"></div>
+          <div class="shelf-footer" id="clip-footer" style="display:none;">
+            <span class="shelf-hint">Click an item to copy again</span>
+            <button type="button" class="mini-text-btn" id="btn-clip-clear">Clear all</button>
+          </div>
+        </div>
+
+        <div class="avatar-view" id="avatar-view" style="display:none;">
+          <div class="avatar-preview-box">
+            <img id="avatar-preview" class="avatar-preview" src="" alt="Selected avatar preview" width="48" height="48" style="display:none;" />
+            <span id="avatar-empty-label" class="shelf-empty-sub">No custom GIF or avatar set</span>
+          </div>
+          <div class="timer-actions">
+            <button type="button" class="dl-btn primary" id="btn-avatar-pick">Choose GIF / Image</button>
+            <button type="button" class="dl-btn" id="btn-avatar-clear">Remove</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/clock.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/island.js"></script>
+</body>
+</html>

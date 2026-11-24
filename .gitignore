@@ -1,0 +1,9 @@
+﻿node_modules/
+spotify-config.json
+spotify-tokens.json
+*.zip
+dist/
+out/
+.DS_Store
+Thumbs.db
+*.log
