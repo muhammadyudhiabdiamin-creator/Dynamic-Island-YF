@@ -13,6 +13,9 @@ let refreshTrayMenu = () => {};
 let spotify;
 let lyrics;
 let pollInterval;
+let tickInterval;
+let lastTrack = null;
+let lastTrackTime = 0;
 let clipboardInterval;
 let downloadWatcher;
 let activityServer;
@@ -39,6 +42,7 @@ function toggleWindowVisibility() {
   if (!mainWindow) return;
   if (mainWindow.isVisible()) mainWindow.hide();
   else mainWindow.show();
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
   refreshTrayMenu();
 }
 
@@ -69,7 +73,7 @@ function createTray() {
         label: 'Disconnect Spotify',
         enabled: spotify ? spotify.isAuthenticated() : false,
         click: () => {
-          if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+          if (pollInterval) { clearInterval(pollInterval); pollInterval = null; } if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
           spotify.disconnect();
           lastTrackId = null;
           currentLyrics = null;
@@ -278,6 +282,7 @@ function createWindow() {
 
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.show();
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
     updateSpotifyStatus();
     mainWindow.webContents.send('clipboard-update', clipboardHistory);
     if (spotify.isAuthenticated()) startPolling();
@@ -298,10 +303,14 @@ let currentLyrics = null;
 
 function startPolling() {
   if (pollInterval) clearInterval(pollInterval);
-  pollInterval = setInterval(async () => {
+  if (tickInterval) clearInterval(tickInterval);
+
+  const pollNow = async () => {
     try {
       const track = await spotify.getCurrentlyPlaying();
       if (track) {
+        lastTrack = track;
+        lastTrackTime = Date.now();
         mainWindow.webContents.send('spotify-track', track);
         if (track.trackId !== lastTrackId) {
           lastTrackId = track.trackId;
@@ -315,21 +324,37 @@ function startPolling() {
           }
         }
       } else if (lastTrackId !== null) {
+        lastTrack = null;
         lastTrackId = null;
         currentLyrics = null;
         mainWindow.webContents.send('spotify-track', null);
       }
     } catch (e) {}
-  }, 4000);
+  };
+
+  pollNow();
+  pollInterval = setInterval(pollNow, 4000);
+
+  tickInterval = setInterval(() => {
+    if (!lastTrack || !lastTrack.isPlaying || !mainWindow || mainWindow.isDestroyed()) return;
+    const elapsed = Date.now() - lastTrackTime;
+    const estimated = Math.min(lastTrack.durationMs, lastTrack.progressMs + elapsed);
+    mainWindow.webContents.send('spotify-track', { ...lastTrack, progressMs: estimated });
+  }, 300);
 }
 
 function cleanup() {
   globalShortcut.unregisterAll();
-  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; } if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
   if (clipboardInterval) { clearInterval(clipboardInterval); clipboardInterval = null; }
   if (downloadWatcher) { downloadWatcher.close(); downloadWatcher = null; }
   if (activityServer) { activityServer.close(); activityServer = null; }
 }
+
+ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) win.setIgnoreMouseEvents(ignore, { forward: true });
+});
 
 ipcMain.on('island-resize', (_, state) => {
   if (!mainWindow) return;
@@ -375,7 +400,7 @@ ipcMain.handle('spotify-connect', async () => {
   }
 });
 ipcMain.handle('spotify-disconnect', async () => {
-  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; } if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
   spotify.disconnect();
   lastTrackId = null;
   currentLyrics = null;

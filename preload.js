@@ -41,3 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onClipboardUpdate: (callback) => ipcRenderer.on('clipboard-update', (_, data) => callback(data)),
   onLiveActivity: (callback) => ipcRenderer.on('live-activity', (_, data) => callback(data)),
 });
+
+contextBridge.exposeInMainWorld('mousePassThrough', {
+  setIgnore: (ignore) => ipcRenderer.send('set-ignore-mouse-events', ignore)
+});

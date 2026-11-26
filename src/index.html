@@ -300,5 +300,22 @@
   <script src="js/clock.js"></script>
   <script src="js/visualizer.js"></script>
   <script src="js/island.js"></script>
+<script>
+(() => {
+  if (!window.mousePassThrough) return;
+  let ignoring = true;
+  const setIgnore = (val) => {
+    if (ignoring === val) return;
+    ignoring = val;
+    window.mousePassThrough.setIgnore(val);
+  };
+  window.addEventListener('mousemove', (e) => {
+    const pill = document.querySelector('#island, .island, #notch, .notch');
+    const overPill = pill ? pill.contains(e.target) : (e.target !== document.body && e.target !== document.documentElement);
+    setIgnore(!overPill);
+  });
+  document.addEventListener('mouseleave', () => setIgnore(true));
+})();
+</script>
 </body>
 </html>
